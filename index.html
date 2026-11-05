@@ -107,7 +107,7 @@
 
     <!-- Minimalist Top-Right Hint (Fades gently, non-intrusive) -->
     <div class="fixed top-6 right-7 z-10 pointer-events-none hidden sm:flex items-center gap-2.5 text-[11px] tracking-[0.18em] uppercase text-white/35 font-light">
-        <span id="top-dedication">Sana Özel Ebedi Koleksiyon</span>
+        <span id="top-dedication">Canım Sevgilime · Özel Koleksiyon</span>
         <span>·</span>
         <span>360° İncelemek İçin Sürükle</span>
     </div>
@@ -149,59 +149,25 @@
         </div>
     </nav>
 
-    <!-- Minimalist Love Letter Modal (Hidden by default, opens only when 💌 is clicked) -->
-    <div id="note-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+    <!-- Minimalist Love Letter Modal (Permanent, Read-Only) -->
+    <div id="note-modal" onclick="if(event.target === this) closeNoteModal()" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/75 backdrop-blur-md">
         <div class="nav-pill rounded-3xl max-w-md w-full p-7 sm:p-9 relative border border-white/15">
             <button onclick="closeNoteModal()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white text-xs transition">
                 ✕
             </button>
 
-            <!-- Read Mode -->
-            <div id="note-read-view" class="space-y-5">
-                <div class="text-[11px] tracking-[0.24em] uppercase text-rose-300/80" id="note-recipient-display">
+            <div class="space-y-5">
+                <div class="text-[11px] tracking-[0.24em] uppercase text-rose-300/80">
                     Canım Sevgilime
                 </div>
-                <h2 class="font-editorial text-3xl sm:text-4xl text-white font-normal leading-tight" id="note-title-display">
+                <h2 class="font-editorial text-3xl sm:text-4xl text-white font-normal leading-tight">
                     Hiç Solmayacak Üç Çiçek
                 </h2>
-                <p class="font-editorial italic text-lg sm:text-xl text-white/85 leading-relaxed" id="note-body-display">
-                    "Gerçek çiçekler birkaç günde solup gider ama sana olan sevgim gibi bu üç çiçek de sonsuza dek açmaya devam edecek. Zarafetin için Lilyum, sadakatimiz için Kasımpatı ve yılda sadece tek bir gece açan eşsiz güzelliğin için Gece Kraliçesi..."
+                <p class="font-editorial italic text-lg sm:text-xl text-white/85 leading-relaxed">
+                    "Gerçek çiçekler birkaç günde solup gider ama sana olan sevgim gibi bu üç çiçek de sonsuza dek açmaya devam edecek. En sevdiğin olduğu için lilyum, tam zamanı olduğu için kasımpatı ve yılda sadece tek bir gece açan ancak senin için burada sonsuza dek açık kalacak Gece Kraliçesi..."
                 </p>
-                <div class="pt-3 border-t border-white/10 flex items-center justify-between">
-                    <span class="text-xs text-white/50 font-light" id="note-sig-display">— Seni Çok Seven Sevgilin ♥</span>
-                    <button onclick="toggleEditNote(true)" class="text-[11px] tracking-wider uppercase text-white/40 hover:text-white/90 transition">
-                        Notu Düzenle ✎
-                    </button>
-                </div>
-            </div>
-
-            <!-- Edit Mode -->
-            <div id="note-edit-view" class="hidden space-y-3.5 text-xs">
-                <div class="text-sm font-medium text-white mb-1">Notu Kişiselleştir</div>
-                <div>
-                    <label class="block text-white/50 mb-1">Hitap / İsim</label>
-                    <input id="input-recipient" type="text" class="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-rose-400">
-                </div>
-                <div>
-                    <label class="block text-white/50 mb-1">Başlık</label>
-                    <input id="input-title" type="text" class="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-rose-400">
-                </div>
-                <div>
-                    <label class="block text-white/50 mb-1">Mesajın</label>
-                    <textarea id="input-body" rows="4" class="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-rose-400"></textarea>
-                </div>
-                <div>
-                    <label class="block text-white/50 mb-1">İmza</label>
-                    <input id="input-sig" type="text" class="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-rose-400">
-                </div>
-                <div class="flex items-center justify-between pt-2">
-                    <button onclick="copyShareUrl()" id="copy-url-btn" class="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-white/80 transition">
-                        🔗 Özel Linki Kopyala
-                    </button>
-                    <div class="flex gap-2">
-                        <button onclick="toggleEditNote(false)" class="px-3.5 py-2 rounded-xl text-white/60 hover:text-white">İptal</button>
-                        <button onclick="saveNoteChanges()" class="px-4 py-2 rounded-xl bg-rose-500/80 hover:bg-rose-500 text-white font-medium transition">Kaydet</button>
-                    </div>
+                <div class="pt-3 border-t border-white/10 flex items-center justify-end">
+                    <span class="text-xs text-white/60 font-light tracking-wider">— İZML</span>
                 </div>
             </div>
         </div>
@@ -209,15 +175,8 @@
 
     <script>
         // ============================================================================
-        // 1. EDITORIAL DATA & PERSONALIZATION
+        // 1. EDITORIAL DATA
         // ============================================================================
-        const noteData = {
-            recipient: "Canım Sevgilime",
-            title: "Hiç Solmayacak Üç Çiçek",
-            body: "\"Gerçek çiçekler birkaç günde solup gider ama sana olan sevgim gibi bu üç çiçek de sonsuza dek açmaya devam edecek. Zarafetin için Lilyum, sadakatimiz için Kasımpatı ve yılda sadece tek bir gece açan eşsiz güzelliğin için Gece Kraliçesi...\"",
-            sig: "— Seni Çok Seven Sevgilin ♥"
-        };
-
         const VIEWS = [
             {
                 index: "01 / 03",
@@ -252,23 +211,6 @@
                 target: new THREE.Vector3(0, 0.95, 0)
             }
         ];
-
-        function initUrlParams() {
-            const p = new URLSearchParams(window.location.search);
-            if (p.get('to')) noteData.recipient = p.get('to');
-            if (p.get('title')) noteData.title = p.get('title');
-            if (p.get('body')) noteData.body = p.get('body');
-            if (p.get('sig')) noteData.sig = p.get('sig');
-            renderNoteDOM();
-        }
-
-        function renderNoteDOM() {
-            document.getElementById('note-recipient-display').textContent = noteData.recipient;
-            document.getElementById('top-dedication').textContent = `${noteData.recipient} · Özel Koleksiyon`;
-            document.getElementById('note-title-display').textContent = noteData.title;
-            document.getElementById('note-body-display').textContent = noteData.body;
-            document.getElementById('note-sig-display').textContent = noteData.sig;
-        }
 
         // ============================================================================
         // 2. THREE.JS STUDIO STAGE & PROCEDURAL ENVIRONMENT LIGHTING
@@ -1520,70 +1462,12 @@
             const modal = document.getElementById('note-modal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            toggleEditNote(false);
         }
 
         function closeNoteModal() {
             const modal = document.getElementById('note-modal');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
-        }
-
-        function toggleEditNote(editMode) {
-            const readView = document.getElementById('note-read-view');
-            const editView = document.getElementById('note-edit-view');
-            if (editMode) {
-                document.getElementById('input-recipient').value = noteData.recipient;
-                document.getElementById('input-title').value = noteData.title;
-                document.getElementById('input-body').value = noteData.body.replace(/^"|"$/g, '');
-                document.getElementById('input-sig').value = noteData.sig;
-                readView.classList.add('hidden');
-                editView.classList.remove('hidden');
-            } else {
-                readView.classList.remove('hidden');
-                editView.classList.add('hidden');
-            }
-        }
-
-        function saveNoteChanges() {
-            const r = document.getElementById('input-recipient').value.trim();
-            const t = document.getElementById('input-title').value.trim();
-            const b = document.getElementById('input-body').value.trim();
-            const s = document.getElementById('input-sig').value.trim();
-
-            if (r) noteData.recipient = r;
-            if (t) noteData.title = t;
-            if (b) noteData.body = `"${b}"`;
-            if (s) noteData.sig = s;
-
-            renderNoteDOM();
-            toggleEditNote(false);
-        }
-
-        function copyShareUrl() {
-            const r = document.getElementById('input-recipient').value.trim() || noteData.recipient;
-            const t = document.getElementById('input-title').value.trim() || noteData.title;
-            const b = document.getElementById('input-body').value.trim() || noteData.body;
-            const s = document.getElementById('input-sig').value.trim() || noteData.sig;
-
-            const params = new URLSearchParams();
-            params.set('to', r);
-            params.set('title', t);
-            params.set('body', b.startsWith('"') ? b : `"${b}"`);
-            params.set('sig', s);
-
-            const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
-            const temp = document.createElement('textarea');
-            temp.value = url;
-            document.body.appendChild(temp);
-            temp.select();
-            document.execCommand('copy');
-            document.body.removeChild(temp);
-
-            const btn = document.getElementById('copy-url-btn');
-            const old = btn.textContent;
-            btn.textContent = "✓ Link Kopyalandı";
-            setTimeout(() => { btn.textContent = old; }, 2000);
         }
 
         // ============================================================================
@@ -1658,7 +1542,6 @@
         });
 
         window.onload = function () {
-            initUrlParams();
             animate();
         };
     </script>
