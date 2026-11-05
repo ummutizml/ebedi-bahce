@@ -1,0 +1,1666 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ebedi Botanik — Sana Özel 3D Çiçek Sergisi</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <!-- Three.js r128 & OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <style>
+        :root {
+            --font-serif: 'Cormorant Garamond', Georgia, serif;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: radial-gradient(circle at 50% 42%, #141724 0%, #090a10 65%, #050609 100%);
+            font-family: var(--font-sans);
+            color: #f4f4f6;
+        }
+
+        #webgl-container {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            cursor: grab;
+        }
+
+        #webgl-container:active {
+            cursor: grabbing;
+        }
+
+        .font-editorial {
+            font-family: var(--font-serif);
+        }
+
+        /* Ultra-minimal floating glass pill */
+        .nav-pill {
+            background: rgba(14, 16, 24, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.11);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+        }
+
+        .nav-tab {
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        .nav-tab:hover {
+            color: rgba(255, 255, 255, 0.92);
+        }
+
+        .nav-tab.active {
+            background: rgba(255, 255, 255, 0.12);
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.22);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Editorial Typography Fade Transition */
+        .editorial-fade {
+            transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .editorial-hidden {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        /* Subtle Ambient Vignette */
+        .vignette-overlay {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 2;
+            background: radial-gradient(circle at 50% 50%, transparent 58%, rgba(3, 4, 7, 0.65) 100%);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 3D WebGL Stage -->
+    <div id="webgl-container"></div>
+    <div class="vignette-overlay"></div>
+
+    <!-- Minimalist Top-Right Hint (Fades gently, non-intrusive) -->
+    <div class="fixed top-6 right-7 z-10 pointer-events-none hidden sm:flex items-center gap-2.5 text-[11px] tracking-[0.18em] uppercase text-white/35 font-light">
+        <span id="top-dedication">Sana Özel Ebedi Koleksiyon</span>
+        <span>·</span>
+        <span>360° İncelemek İçin Sürükle</span>
+    </div>
+
+    <!-- ONLY UI ELEMENT 1: Bottom-Left Quiet Editorial Typography -->
+    <div id="editorial-caption" class="fixed bottom-24 sm:bottom-11 left-6 sm:left-11 z-10 pointer-events-none max-w-md editorial-fade">
+        <div class="flex items-center gap-3 mb-1.5">
+            <span id="caption-index" class="text-[11px] tracking-[0.25em] uppercase text-rose-300/80 font-medium">01 / 03</span>
+            <span class="w-6 h-[1px] bg-white/20"></span>
+            <span id="caption-latin" class="text-[11px] tracking-[0.12em] italic text-white/45 font-light">Lilium orientalis 'Stargazer'</span>
+        </div>
+        <h1 id="caption-title" class="font-editorial text-3xl sm:text-5xl font-normal text-white tracking-wide leading-none mb-2.5">
+            Stargazer Lilyum
+        </h1>
+        <p id="caption-desc" class="text-xs sm:text-sm text-white/65 font-light leading-relaxed">
+            Saf aşkın, zarafetin ve ilk bakışta kalbi çarptıran o eşsiz heyecanın simgesi. Her bir yaprağı senin inceliğini anlatmak için işlendi.
+        </p>
+    </div>
+
+    <!-- ONLY UI ELEMENT 2: Bottom-Center Sleek Floating Glass Pill Navigation -->
+    <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 max-w-[95vw]">
+        <div class="nav-pill p-1.5 rounded-full flex items-center gap-1 sm:gap-1.5">
+            <button onclick="switchView(0)" id="tab-0" class="nav-tab active px-3.5 sm:px-5 py-2 rounded-full text-xs tracking-wider font-normal border border-transparent whitespace-nowrap">
+                01 · Lilyum
+            </button>
+            <button onclick="switchView(1)" id="tab-1" class="nav-tab px-3.5 sm:px-5 py-2 rounded-full text-xs tracking-wider font-normal border border-transparent whitespace-nowrap">
+                02 · Kasımpatı
+            </button>
+            <button onclick="switchView(2)" id="tab-2" class="nav-tab px-3.5 sm:px-5 py-2 rounded-full text-xs tracking-wider font-normal border border-transparent whitespace-nowrap">
+                03 · Gece Kraliçesi
+            </button>
+            <button onclick="switchView(3)" id="tab-3" class="nav-tab px-3.5 sm:px-5 py-2 rounded-full text-xs tracking-wider font-normal border border-transparent whitespace-nowrap">
+                Buket
+            </button>
+            <div class="w-[1px] h-4 bg-white/15 mx-0.5"></div>
+            <button onclick="openNoteModal()" class="w-8 h-8 rounded-full flex items-center justify-center text-sm bg-white/5 hover:bg-white/15 border border-white/10 transition" title="Özel Aşk Notu">
+                💌
+            </button>
+        </div>
+    </nav>
+
+    <!-- Minimalist Love Letter Modal (Hidden by default, opens only when 💌 is clicked) -->
+    <div id="note-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+        <div class="nav-pill rounded-3xl max-w-md w-full p-7 sm:p-9 relative border border-white/15">
+            <button onclick="closeNoteModal()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white text-xs transition">
+                ✕
+            </button>
+
+            <!-- Read Mode -->
+            <div id="note-read-view" class="space-y-5">
+                <div class="text-[11px] tracking-[0.24em] uppercase text-rose-300/80" id="note-recipient-display">
+                    Canım Sevgilime
+                </div>
+                <h2 class="font-editorial text-3xl sm:text-4xl text-white font-normal leading-tight" id="note-title-display">
+                    Hiç Solmayacak Üç Çiçek
+                </h2>
+                <p class="font-editorial italic text-lg sm:text-xl text-white/85 leading-relaxed" id="note-body-display">
+                    "Gerçek çiçekler birkaç günde solup gider ama sana olan sevgim gibi bu üç çiçek de sonsuza dek açmaya devam edecek. Zarafetin için Lilyum, sadakatimiz için Kasımpatı ve yılda sadece tek bir gece açan eşsiz güzelliğin için Gece Kraliçesi..."
+                </p>
+                <div class="pt-3 border-t border-white/10 flex items-center justify-between">
+                    <span class="text-xs text-white/50 font-light" id="note-sig-display">— Seni Çok Seven Sevgilin ♥</span>
+                    <button onclick="toggleEditNote(true)" class="text-[11px] tracking-wider uppercase text-white/40 hover:text-white/90 transition">
+                        Notu Düzenle ✎
+                    </button>
+                </div>
+            </div>
+
+            <!-- Edit Mode -->
+            <div id="note-edit-view" class="hidden space-y-3.5 text-xs">
+                <div class="text-sm font-medium text-white mb-1">Notu Kişiselleştir</div>
+                <div>
+                    <label class="block text-white/50 mb-1">Hitap / İsim</label>
+                    <input id="input-recipient" type="text" class="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-rose-400">
+                </div>
+                <div>
+                    <label class="block text-white/50 mb-1">Başlık</label>
+                    <input id="input-title" type="text" class="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-rose-400">
+                </div>
+                <div>
+                    <label class="block text-white/50 mb-1">Mesajın</label>
+                    <textarea id="input-body" rows="4" class="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-rose-400"></textarea>
+                </div>
+                <div>
+                    <label class="block text-white/50 mb-1">İmza</label>
+                    <input id="input-sig" type="text" class="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-rose-400">
+                </div>
+                <div class="flex items-center justify-between pt-2">
+                    <button onclick="copyShareUrl()" id="copy-url-btn" class="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-white/80 transition">
+                        🔗 Özel Linki Kopyala
+                    </button>
+                    <div class="flex gap-2">
+                        <button onclick="toggleEditNote(false)" class="px-3.5 py-2 rounded-xl text-white/60 hover:text-white">İptal</button>
+                        <button onclick="saveNoteChanges()" class="px-4 py-2 rounded-xl bg-rose-500/80 hover:bg-rose-500 text-white font-medium transition">Kaydet</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================================
+        // 1. EDITORIAL DATA & PERSONALIZATION
+        // ============================================================================
+        const noteData = {
+            recipient: "Canım Sevgilime",
+            title: "Hiç Solmayacak Üç Çiçek",
+            body: "\"Gerçek çiçekler birkaç günde solup gider ama sana olan sevgim gibi bu üç çiçek de sonsuza dek açmaya devam edecek. Zarafetin için Lilyum, sadakatimiz için Kasımpatı ve yılda sadece tek bir gece açan eşsiz güzelliğin için Gece Kraliçesi...\"",
+            sig: "— Seni Çok Seven Sevgilin ♥"
+        };
+
+        const VIEWS = [
+            {
+                index: "01 / 03",
+                latin: "Lilium orientalis 'Stargazer'",
+                title: "Stargazer Lilyum",
+                desc: "Saf aşkın, asil zarafetin ve ilk bakışta kalbi çarptıran o eşsiz heyecanın simgesi. İpeksi pembe kalbi ve kıvrımlı beyaz uçlarıyla senin inceliğini anlatıyor.",
+                camPos: new THREE.Vector3(0, 1.9, 6.4),
+                target: new THREE.Vector3(0, 1.15, 0)
+            },
+            {
+                index: "02 / 03",
+                latin: "Chrysanthemum × grandiflorum",
+                title: "Kraliyet Kasımpatısı",
+                desc: "Altın orana göre dizilmiş 180 taç yaprağının tek bir kalpte buluşması. Her mevsimde sarsılmaz bağlılığı, iç ısıtan neşeyi ve derin sadakati temsil ediyor.",
+                camPos: new THREE.Vector3(0, 2.1, 6.2),
+                target: new THREE.Vector3(0, 1.15, 0)
+            },
+            {
+                index: "03 / 03",
+                latin: "Epiphyllum oxypetalum",
+                title: "Gece Kraliçesi",
+                desc: "Dünyada yılda sadece tek bir gece açıp sabah olmadan solan en nadir ve büyüleyici çiçek. Burada ise tıpkı sana olan sevgim gibi sonsuza dek açık kalacak.",
+                camPos: new THREE.Vector3(0, 1.85, 6.5),
+                target: new THREE.Vector3(0, 1.15, 0)
+            },
+            {
+                index: "KOLEKSİYON",
+                latin: "Tria Flora Aeterna",
+                title: "Ebedi Kristal Buket",
+                desc: "Lilyumun zarafeti, Kasımpatının sadakati ve Gece Kraliçesinin eşsiz mucizesi; senin için tek bir kristal vazoda buluştu.",
+                camPos: new THREE.Vector3(0, 2.3, 9.6),
+                target: new THREE.Vector3(0, 0.95, 0)
+            }
+        ];
+
+        function initUrlParams() {
+            const p = new URLSearchParams(window.location.search);
+            if (p.get('to')) noteData.recipient = p.get('to');
+            if (p.get('title')) noteData.title = p.get('title');
+            if (p.get('body')) noteData.body = p.get('body');
+            if (p.get('sig')) noteData.sig = p.get('sig');
+            renderNoteDOM();
+        }
+
+        function renderNoteDOM() {
+            document.getElementById('note-recipient-display').textContent = noteData.recipient;
+            document.getElementById('top-dedication').textContent = `${noteData.recipient} · Özel Koleksiyon`;
+            document.getElementById('note-title-display').textContent = noteData.title;
+            document.getElementById('note-body-display').textContent = noteData.body;
+            document.getElementById('note-sig-display').textContent = noteData.sig;
+        }
+
+        // ============================================================================
+        // 2. THREE.JS STUDIO STAGE & PROCEDURAL ENVIRONMENT LIGHTING
+        // ============================================================================
+        const container = document.getElementById('webgl-container');
+        const scene = new THREE.Scene();
+
+        const camera = new THREE.PerspectiveCamera(36, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 1.9, 6.4);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.outputEncoding = THREE.sRGBEncoding;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.12;
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.045;
+        controls.enablePan = false;
+        controls.minDistance = 3.2;
+        controls.maxDistance = 14.5;
+        controls.maxPolarAngle = Math.PI * 0.56;
+        controls.minPolarAngle = Math.PI * 0.12;
+        controls.target.set(0, 1.15, 0);
+
+        // Create Studio Softbox Environment Map via PMREMGenerator so petals have lifelike sheen & specular highlights
+        function createStudioEnvMap() {
+            const pmremGenerator = new THREE.PMREMGenerator(renderer);
+            pmremGenerator.compileEquirectangularShader();
+
+            const envScene = new THREE.Scene();
+            envScene.background = new THREE.Color(0x0b0d14);
+
+            // Overhead warm softbox
+            const topLightMesh = new THREE.Mesh(
+                new THREE.PlaneGeometry(16, 16),
+                new THREE.MeshBasicMaterial({ color: 0xfff5f0, side: THREE.DoubleSide })
+            );
+            topLightMesh.position.set(0, 10, 0);
+            topLightMesh.rotation.x = Math.PI / 2;
+            envScene.add(topLightMesh);
+
+            // Left rose rim softbox
+            const leftLightMesh = new THREE.Mesh(
+                new THREE.PlaneGeometry(12, 12),
+                new THREE.MeshBasicMaterial({ color: 0xffd1dc, side: THREE.DoubleSide })
+            );
+            leftLightMesh.position.set(-10, 4, 4);
+            leftLightMesh.lookAt(0, 0, 0);
+            envScene.add(leftLightMesh);
+
+            // Right cool moonlight softbox
+            const rightLightMesh = new THREE.Mesh(
+                new THREE.PlaneGeometry(12, 12),
+                new THREE.MeshBasicMaterial({ color: 0xdbeafe, side: THREE.DoubleSide })
+            );
+            rightLightMesh.position.set(10, 5, -4);
+            rightLightMesh.lookAt(0, 0, 0);
+            envScene.add(rightLightMesh);
+
+            const envRT = pmremGenerator.fromScene(envScene, 0.04);
+            scene.environment = envRT.texture;
+            pmremGenerator.dispose();
+        }
+        createStudioEnvMap();
+
+        // Key, Fill, Rim & Subsurface Studio Lights
+        const ambientLight = new THREE.HemisphereLight(0xfff1f2, 0x0f172a, 0.55);
+        scene.add(ambientLight);
+
+        const keyLight = new THREE.SpotLight(0xfff7ed, 2.2);
+        keyLight.position.set(5.5, 9.5, 6.5);
+        keyLight.angle = Math.PI / 3.5;
+        keyLight.penumbra = 0.85;
+        keyLight.castShadow = true;
+        keyLight.shadow.mapSize.width = 2048;
+        keyLight.shadow.mapSize.height = 2048;
+        keyLight.shadow.bias = -0.0003;
+        scene.add(keyLight);
+
+        const fillLight = new THREE.PointLight(0xfbcfe8, 1.1, 18);
+        fillLight.position.set(-5.5, 4.0, 4.5);
+        scene.add(fillLight);
+
+        const rimLight = new THREE.SpotLight(0xe0f2fe, 1.65);
+        rimLight.position.set(0, 6.5, -7.5);
+        rimLight.angle = Math.PI / 3;
+        rimLight.penumbra = 0.9;
+        scene.add(rimLight);
+
+        // Warm core glow light for flower heart
+        const heartLight = new THREE.PointLight(0xfef08a, 0.85, 5.5);
+        heartLight.position.set(0, 2.2, 0.3);
+        scene.add(heartLight);
+
+        // ============================================================================
+        // 3. HIGH-RESOLUTION (1024x1024) PROCEDURAL BOTANICAL TEXTURE GENERATORS
+        // ============================================================================
+
+        /**
+         * 1. Stargazer Lily Texture:
+         * Deep crimson-pink midrib, soft rose-pink body, wide snow-white border,
+         * chartreuse-green nectar star base, radiating fine silk veins & raised dark burgundy papillae spots.
+         */
+        function createLilyTextures() {
+            const size = 1024;
+            const colorCanvas = document.createElement('canvas');
+            colorCanvas.width = size;
+            colorCanvas.height = size;
+            const ctx = colorCanvas.getContext('2d');
+
+            const bumpCanvas = document.createElement('canvas');
+            bumpCanvas.width = size;
+            bumpCanvas.height = size;
+            const bCtx = bumpCanvas.getContext('2d');
+
+            // Fill base white
+            ctx.fillStyle = '#fffafa';
+            ctx.fillRect(0, 0, size, size);
+
+            bCtx.fillStyle = '#808080';
+            bCtx.fillRect(0, 0, size, size);
+
+            // Pixel-by-pixel rich botanical gradient + longitudinal veins
+            const imgData = ctx.getImageData(0, 0, size, size);
+            const bmpData = bCtx.getImageData(0, 0, size, size);
+            const d = imgData.data;
+            const bd = bmpData.data;
+
+            for (let y = 0; y < size; y++) {
+                const v = 1.0 - y / size; // v=0 at base, v=1 at tip
+                for (let x = 0; x < size; x++) {
+                    const u = (x / size) * 2.0 - 1.0; // u in [-1, 1]
+                    const absU = Math.abs(u);
+                    const idx = (y * size + x) * 4;
+
+                    // White margin width increases near tip
+                    const marginStart = 0.58 - Math.pow(v, 2.2) * 0.25;
+                    const centerFactor = Math.max(0, 1.0 - absU / Math.max(0.15, marginStart));
+
+                    // Base colors
+                    // Deep Stargazer Crimson (#b8144d) -> Soft Rose (#f472b6) -> Pure White (#ffffff)
+                    let r = 252, g = 250, b = 252;
+
+                    const pinkBlend = Math.pow(centerFactor, 0.75) * (1.0 - Math.pow(v, 3.2) * 0.85);
+                    r = r * (1 - pinkBlend) + 236 * pinkBlend;
+                    g = g * (1 - pinkBlend) + 88 * pinkBlend;
+                    b = b * (1 - pinkBlend) + 145 * pinkBlend;
+
+                    // Deep magenta central midrib stripe
+                    const midrib = Math.exp(-Math.pow(absU * 9.5, 2)) * (1.0 - Math.pow(v, 1.8) * 0.7);
+                    r = r * (1 - midrib * 0.85) + 145 * (midrib * 0.85);
+                    g = g * (1 - midrib * 0.85) + 12 * (midrib * 0.85);
+                    b = b * (1 - midrib * 0.85) + 62 * (midrib * 0.85);
+
+                    // Lime-green nectar furrow at the very base (v < 0.16)
+                    if (v < 0.16) {
+                        const nectar = Math.pow(1.0 - v / 0.16, 1.5) * Math.exp(-Math.pow(absU * 3.5, 2));
+                        r = r * (1 - nectar * 0.75) + 163 * (nectar * 0.75);
+                        g = g * (1 - nectar * 0.75) + 215 * (nectar * 0.75);
+                        b = b * (1 - nectar * 0.75) + 110 * (nectar * 0.75);
+                    }
+
+                    // Fine branching longitudinal veins
+                    const veinCoord = absU * 38.0 - Math.pow(v, 1.3) * 6.0;
+                    const veinWave = Math.sin(veinCoord * Math.PI * 2) * 0.5 + 0.5;
+                    const microVein = Math.sin(absU * 140.0 * Math.PI) * 0.5 + 0.5;
+                    const veinStrength = (veinWave * 0.65 + microVein * 0.35) * (1.0 - absU * 0.4);
+
+                    // Subtle vein tint
+                    r -= veinStrength * 8 * pinkBlend;
+                    g -= veinStrength * 14 * pinkBlend;
+                    b -= veinStrength * 10 * pinkBlend;
+
+                    d[idx] = Math.min(255, Math.max(0, r));
+                    d[idx + 1] = Math.min(255, Math.max(0, g));
+                    d[idx + 2] = Math.min(255, Math.max(0, b));
+                    d[idx + 3] = 255;
+
+                    // Bump height: midrib ridge + delicate veins
+                    const bumpVal = 128 + midrib * 55 + veinStrength * 28;
+                    bd[idx] = bd[idx + 1] = bd[idx + 2] = Math.min(255, Math.max(0, bumpVal));
+                    bd[idx + 3] = 255;
+                }
+            }
+
+            ctx.putImageData(imgData, 0, 0);
+            bCtx.putImageData(bmpData, 0, 0);
+
+            // Draw authentic raised dark-burgundy Stargazer papillae speckles in lower-mid zone
+            let seed = 1337;
+            function rand() {
+                seed = (seed * 16807) % 2147483647;
+                return (seed - 1) / 2147483646;
+            }
+
+            for (let i = 0; i < 165; i++) {
+                const sv = 0.10 + Math.pow(rand(), 1.15) * 0.55;
+                const maxSpread = 0.52 * Math.sin(sv * Math.PI);
+                const su = (rand() * 2 - 1) * maxSpread;
+                if (Math.abs(su) < 0.04) continue; // Keep center line clean
+
+                const px = (su * 0.5 + 0.5) * size;
+                const py = (1.0 - sv) * size;
+                const rx = 3.2 + rand() * 4.5;
+                const ry = rx * (1.35 + rand() * 0.5);
+
+                // Soft pink halo around each papilla spot
+                const grad = ctx.createRadialGradient(px, py, 0, px, py, ry * 1.6);
+                grad.addColorStop(0, '#590826');
+                grad.addColorStop(0.55, '#880e3a');
+                grad.addColorStop(1, 'rgba(219, 39, 119, 0)');
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.ellipse(px, py, rx * 1.4, ry * 1.4, su * 0.4, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Raised bump for papillae
+                const bGrad = bCtx.createRadialGradient(px, py, 0, px, py, ry);
+                bGrad.addColorStop(0, '#ffffff');
+                bGrad.addColorStop(1, 'rgba(128,128,128,0)');
+                bCtx.fillStyle = bGrad;
+                bCtx.beginPath();
+                bCtx.ellipse(px, py, rx, ry, su * 0.4, 0, Math.PI * 2);
+                bCtx.fill();
+            }
+
+            const map = new THREE.CanvasTexture(colorCanvas);
+            map.encoding = THREE.sRGBEncoding;
+            map.anisotropy = 8;
+
+            const bumpMap = new THREE.CanvasTexture(bumpCanvas);
+            bumpMap.anisotropy = 8;
+
+            return { map, bumpMap };
+        }
+
+        /**
+         * 2. Chrysanthemum Floret Textures:
+         * Rich velvet striation with smooth longitudinal ribs and warm gold-to-ruby-to-blush transitions.
+         */
+        function createChrysanthemumBumpMap() {
+            const size = 512;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            const img = ctx.createImageData(size, size);
+            const d = img.data;
+
+            for (let y = 0; y < size; y++) {
+                for (let x = 0; x < size; x++) {
+                    const u = (x / size) * 2 - 1;
+                    const ribs = Math.sin(u * Math.PI * 18) * 0.5 + 0.5;
+                    const val = 115 + ribs * 45;
+                    const idx = (y * size + x) * 4;
+                    d[idx] = d[idx + 1] = d[idx + 2] = val;
+                    d[idx + 3] = 255;
+                }
+            }
+            ctx.putImageData(img, 0, 0);
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.anisotropy = 4;
+            return tex;
+        }
+
+        function createChrysTierColorMap(innerHex, midHex, tipHex) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+
+            const grad = ctx.createLinearGradient(0, 512, 0, 0); // Base (y=512) to Tip (y=0)
+            grad.addColorStop(0.0, innerHex);
+            grad.addColorStop(0.48, midHex);
+            grad.addColorStop(1.0, tipHex);
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 256, 512);
+
+            // Subtle longitudinal silk shading
+            const sideGrad = ctx.createLinearGradient(0, 0, 256, 0);
+            sideGrad.addColorStop(0, 'rgba(255,255,255,0.12)');
+            sideGrad.addColorStop(0.5, 'rgba(0,0,0,0.06)');
+            sideGrad.addColorStop(1, 'rgba(255,255,255,0.12)');
+            ctx.fillStyle = sideGrad;
+            ctx.fillRect(0, 0, 256, 512);
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.encoding = THREE.sRGBEncoding;
+            return tex;
+        }
+
+        /**
+         * 3. Queen of the Night (Epiphyllum oxypetalum) Textures:
+         * Translucent pearl-white satin petals with delicate moonlit veining and warm champagne-gold base.
+         */
+        function createQueenOfNightTextures() {
+            const size = 1024;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            const img = ctx.createImageData(size, size);
+            const d = img.data;
+
+            for (let y = 0; y < size; y++) {
+                const v = 1.0 - y / size;
+                for (let x = 0; x < size; x++) {
+                    const u = (x / size) * 2 - 1;
+                    const absU = Math.abs(u);
+                    const idx = (y * size + x) * 4;
+
+                    // Warm golden-ivory base fading into luminous pure pearl white
+                    const baseWarmth = Math.pow(1.0 - v, 2.2);
+                    const midrib = Math.exp(-Math.pow(absU * 7.0, 2));
+                    const fineVein = Math.sin(absU * 65.0 * Math.PI) * 0.5 + 0.5;
+
+                    const r = 255 - baseWarmth * 4 - fineVein * 4;
+                    const g = 253 - baseWarmth * 12 - midrib * 5 - fineVein * 5;
+                    const b = 250 - baseWarmth * 35 - midrib * 12 - fineVein * 6;
+
+                    d[idx] = Math.min(255, Math.max(0, r));
+                    d[idx + 1] = Math.min(255, Math.max(0, g));
+                    d[idx + 2] = Math.min(255, Math.max(0, b));
+                    d[idx + 3] = 255;
+                }
+            }
+            ctx.putImageData(img, 0, 0);
+            const map = new THREE.CanvasTexture(canvas);
+            map.encoding = THREE.sRGBEncoding;
+            map.anisotropy = 8;
+            return map;
+        }
+
+        // ============================================================================
+        // 4. HIGH-RESOLUTION PARAMETRIC 3D PETAL & LEAF SCULPTING ENGINE
+        // ============================================================================
+        /**
+         * Generates a true sculpted 3D botanical petal geometry (up to 36x64 grid = 2,304 quads)
+         * with pinched claw base, smooth width silhouette, longitudinal S-curve,
+         * transverse concave cupping, central midrib channel, radiating veins & ruffled margins.
+         */
+        function createSculptedPetalGeometry(cfg) {
+            const {
+                length = 2.0,
+                width = 0.85,
+                uSegs = 32,
+                vSegs = 56,
+                widthCurve = (v) => Math.sin(Math.pow(v, 0.65) * Math.PI),
+                archCurve = (v) => Math.sin(v * Math.PI * 0.85) * 0.3,
+                tipRecurve = -0.45,
+                cupDepth = 0.16,
+                midribDepth = -0.035,
+                ruffleAmp = 0.045,
+                ruffleFreq = 5.5,
+                veinAmp = 0.008,
+                asymmetry = 0.0
+            } = cfg;
+
+            const geo = new THREE.PlaneGeometry(1, 1, uSegs, vSegs);
+            const pos = geo.attributes.position;
+            const uvs = geo.attributes.uv;
+
+            for (let i = 0; i < pos.count; i++) {
+                // u in [-0.5, 0.5] -> normU in [-1, 1]; v in [0, 1] from base to tip
+                const rawU = pos.getX(i);
+                const normU = rawU * 2.0;
+                const absU = Math.abs(normU);
+                const v = pos.getY(i) + 0.5;
+
+                // 1. Transverse width with natural pinched base and acuminate tip
+                const wProfile = widthCurve(v);
+                const x = (rawU * width * wProfile) + Math.sin(v * Math.PI) * asymmetry;
+
+                // 2. Longitudinal Z extension with subtle foreshortening as tip recurves
+                const recurveAngle = Math.pow(v, 2.4) * tipRecurve;
+                const z = v * length * (1.0 - Math.abs(recurveAngle) * 0.12);
+
+                // 3. Transverse concave cupping (bowl profile across width)
+                const cupEnvelope = Math.sin(Math.pow(v, 0.75) * Math.PI);
+                const cup = (1.0 - normU * normU) * cupDepth * cupEnvelope;
+
+                // 4. Central longitudinal midrib channel
+                const midrib = Math.exp(-Math.pow(normU * 5.0, 2)) * midribDepth * cupEnvelope;
+
+                // 5. Radiating lateral botanical vein micro-relief
+                const veinPhase = absU * 14.0 - Math.pow(v, 1.2) * 3.5;
+                const veins = Math.sin(veinPhase * Math.PI * 2) * veinAmp * (1.0 - absU * 0.3) * cupEnvelope;
+
+                // 6. Organic ruffled petal margins
+                const edgeWeight = Math.pow(absU, 1.85);
+                const edgeEnvelope = Math.sin(Math.pow(v, 0.8) * Math.PI);
+                const ruffle = Math.sin(v * Math.PI * ruffleFreq + (normU > 0 ? 0.4 : -0.4)) * ruffleAmp * edgeWeight * edgeEnvelope;
+
+                // 7. Longitudinal arch + tip recurve
+                const arch = archCurve(v) + Math.pow(v, 2.5) * tipRecurve;
+
+                const y = arch + cup + midrib + veins + ruffle;
+
+                pos.setXYZ(i, x, y, z);
+                uvs.setXY(i, rawU + 0.5, v);
+            }
+
+            geo.computeVertexNormals();
+            return geo;
+        }
+
+        // Shared Stem & Leaf Material
+        const stemMaterial = new THREE.MeshPhysicalMaterial({
+            color: 0x244732,
+            roughness: 0.42,
+            metalness: 0.02,
+            clearcoat: 0.35,
+            clearcoatRoughness: 0.4,
+            side: THREE.DoubleSide
+        });
+
+        const leafMaterial = new THREE.MeshPhysicalMaterial({
+            color: 0x1e462f,
+            roughness: 0.32,
+            metalness: 0.04,
+            clearcoat: 0.55,
+            clearcoatRoughness: 0.28,
+            side: THREE.DoubleSide
+        });
+
+        function createSculptedLeaf(length = 1.4, width = 0.36, droop = -0.42) {
+            const geo = createSculptedPetalGeometry({
+                length,
+                width,
+                uSegs: 18,
+                vSegs: 32,
+                widthCurve: (v) => Math.pow(Math.sin(Math.pow(v, 0.6) * Math.PI), 0.85),
+                archCurve: (v) => Math.sin(v * Math.PI * 0.8) * 0.22,
+                tipRecurve: droop,
+                cupDepth: -0.055,
+                midribDepth: -0.028,
+                ruffleAmp: 0.015,
+                ruffleFreq: 3.5,
+                veinAmp: 0.005
+            });
+            const mesh = new THREE.Mesh(geo, leafMaterial);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            return mesh;
+        }
+
+        // ============================================================================
+        // 5. FLOWER 1 BUILDER: STARGAZER LİLYUM (ORIENTAL LILY)
+        // ============================================================================
+        function buildStargazerLily() {
+            const flowerGroup = new THREE.Group();
+
+            // 1. Curved Organic Stem
+            const stemCurve = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(0, -2.2, -0.15),
+                new THREE.Vector3(-0.08, -1.0, -0.05),
+                new THREE.Vector3(0.05, 0.1, 0.04),
+                new THREE.Vector3(0.0, 1.05, 0.0)
+            ]);
+            const stemGeo = new THREE.TubeGeometry(stemCurve, 48, 0.068, 16, false);
+            const stemMesh = new THREE.Mesh(stemGeo, stemMaterial);
+            stemMesh.castShadow = true;
+            flowerGroup.add(stemMesh);
+
+            // 2. Spiraling Lanceolate Lily Leaves
+            const leafData = [
+                { t: 0.32, rotY: 0.5, tilt: 0.38, len: 1.55, w: 0.34 },
+                { t: 0.50, rotY: 2.6, tilt: 0.42, len: 1.40, w: 0.32 },
+                { t: 0.68, rotY: 4.7, tilt: 0.35, len: 1.25, w: 0.28 },
+                { t: 0.82, rotY: 1.4, tilt: 0.32, len: 1.05, w: 0.24 }
+            ];
+            leafData.forEach(ld => {
+                const pt = stemCurve.getPoint(ld.t);
+                const leaf = createSculptedLeaf(ld.len, ld.w, -0.48);
+                leaf.position.copy(pt);
+                leaf.rotation.y = ld.rotY;
+                leaf.rotation.x = -ld.tilt;
+                flowerGroup.add(leaf);
+            });
+
+            // 3. Flower Head Receptacle pivoted toward viewer
+            const headGroup = new THREE.Group();
+            headGroup.position.set(0, 1.05, 0);
+            headGroup.rotation.x = 0.48; // Tilted forward so viewer looks right into the sculpted bloom
+            flowerGroup.add(headGroup);
+
+            // Pedicel / Receptacle swelling
+            const pedicelGeo = new THREE.CylinderGeometry(0.11, 0.068, 0.24, 16);
+            const pedicelMesh = new THREE.Mesh(pedicelGeo, stemMaterial);
+            pedicelMesh.position.y = -0.05;
+            headGroup.add(pedicelMesh);
+
+            // High-res Stargazer Lily Textures & Physical Material
+            const { map, bumpMap } = createLilyTextures();
+            const lilyPetalMat = new THREE.MeshPhysicalMaterial({
+                map: map,
+                bumpMap: bumpMap,
+                bumpScale: 0.022,
+                roughness: 0.34,
+                metalness: 0.0,
+                clearcoat: 0.22,
+                clearcoatRoughness: 0.45,
+                reflectivity: 0.5,
+                side: THREE.DoubleSide
+            });
+
+            // Inner Whorl Geometry (3 broad, deeply ruffled tepals)
+            const innerTepalGeo = createSculptedPetalGeometry({
+                length: 2.15,
+                width: 0.96,
+                uSegs: 36,
+                vSegs: 64,
+                widthCurve: (v) => {
+                    // Narrow claw base -> wide oval belly -> pointed tip
+                    const claw = Math.min(1.0, v * 5.0);
+                    return claw * Math.pow(Math.sin(Math.pow(v, 0.72) * Math.PI), 0.78);
+                },
+                archCurve: (v) => Math.sin(v * Math.PI * 0.82) * 0.44,
+                tipRecurve: -0.82,
+                cupDepth: 0.16,
+                midribDepth: -0.042,
+                ruffleAmp: 0.068,
+                ruffleFreq: 6.5,
+                veinAmp: 0.009
+            });
+
+            // Outer Whorl Geometry (3 slightly sleeker tepals alternating between inner ones)
+            const outerTepalGeo = createSculptedPetalGeometry({
+                length: 2.22,
+                width: 0.80,
+                uSegs: 36,
+                vSegs: 64,
+                widthCurve: (v) => {
+                    const claw = Math.min(1.0, v * 5.0);
+                    return claw * Math.pow(Math.sin(Math.pow(v, 0.74) * Math.PI), 0.84);
+                },
+                archCurve: (v) => Math.sin(v * Math.PI * 0.80) * 0.38,
+                tipRecurve: -0.92,
+                cupDepth: 0.13,
+                midribDepth: -0.036,
+                ruffleAmp: 0.045,
+                ruffleFreq: 5.5,
+                veinAmp: 0.008
+            });
+
+            // Place 3 Outer Tepals + 3 Inner Tepals
+            for (let i = 0; i < 6; i++) {
+                const isInner = i % 2 === 1;
+                const angle = (i * Math.PI) / 3;
+                const pivot = new THREE.Group();
+                pivot.rotation.y = angle;
+                pivot.position.y = isInner ? 0.05 : 0.0;
+
+                const mesh = new THREE.Mesh(isInner ? innerTepalGeo : outerTepalGeo, lilyPetalMat);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                mesh.rotation.x = isInner ? -Math.PI * 0.14 : -Math.PI * 0.09;
+
+                pivot.add(mesh);
+                headGroup.add(pivot);
+            }
+
+            // 4. Authentic Reproductive Center: 6 Filaments with T-Shaped Rust-Orange Pollen Anthers + Central Style
+            const filamentMat = new THREE.MeshPhysicalMaterial({
+                color: 0xfdf2f8,
+                roughness: 0.25,
+                clearcoat: 0.5
+            });
+            const antherMat = new THREE.MeshStandardMaterial({
+                color: 0xb45309,
+                roughness: 0.85,
+                bumpMap: bumpMap,
+                bumpScale: 0.015
+            });
+
+            for (let i = 0; i < 6; i++) {
+                const angle = (i * Math.PI) / 3 + 0.18;
+                const stamGroup = new THREE.Group();
+                stamGroup.rotation.y = angle;
+
+                const fCurve = new THREE.CatmullRomCurve3([
+                    new THREE.Vector3(0, 0.02, 0.03),
+                    new THREE.Vector3(0, 0.55, 0.09),
+                    new THREE.Vector3(0, 1.12, 0.26),
+                    new THREE.Vector3(0, 1.48, 0.34)
+                ]);
+                const fGeo = new THREE.TubeGeometry(fCurve, 28, 0.018, 10, false);
+                const fMesh = new THREE.Mesh(fGeo, filamentMat);
+                stamGroup.add(fMesh);
+
+                // Sculpted 2-lobed versatile pollen anther
+                const antherPivot = new THREE.Group();
+                antherPivot.position.set(0, 1.49, 0.34);
+                antherPivot.rotation.x = 0.4 + (i % 2) * 0.25;
+                antherPivot.rotation.z = Math.PI * 0.38;
+
+                const lobeGeo = new THREE.CylinderGeometry(0.026, 0.026, 0.28, 12);
+                const lobe1 = new THREE.Mesh(lobeGeo, antherMat);
+                lobe1.position.x = 0.014;
+                const lobe2 = new THREE.Mesh(lobeGeo, antherMat);
+                lobe2.position.x = -0.014;
+                antherPivot.add(lobe1, lobe2);
+
+                stamGroup.add(antherPivot);
+                headGroup.add(stamGroup);
+            }
+
+            // Central Style + 3-Lobed Velvet Stigma
+            const styleCurve = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(0, 0.0, 0),
+                new THREE.Vector3(0, 0.65, 0.02),
+                new THREE.Vector3(0, 1.35, -0.04),
+                new THREE.Vector3(0, 1.68, -0.09)
+            ]);
+            const styleGeo = new THREE.TubeGeometry(styleCurve, 28, 0.028, 12, false);
+            const styleMat = new THREE.MeshPhysicalMaterial({ color: 0xd9f99d, roughness: 0.3, clearcoat: 0.4 });
+            headGroup.add(new THREE.Mesh(styleGeo, styleMat));
+
+            const stigmaMat = new THREE.MeshStandardMaterial({ color: 0x701a75, roughness: 0.75 });
+            for (let k = 0; k < 3; k++) {
+                const a = (k * Math.PI * 2) / 3;
+                const sLobe = new THREE.Mesh(new THREE.SphereGeometry(0.048, 14, 14), stigmaMat);
+                sLobe.scale.set(1.2, 0.85, 1.5);
+                sLobe.rotation.y = a;
+                sLobe.position.set(Math.cos(a) * 0.036, 1.69, -0.09 + Math.sin(a) * 0.036);
+                headGroup.add(sLobe);
+            }
+
+            return { root: flowerGroup, head: headGroup };
+        }
+
+        // ============================================================================
+        // 6. FLOWER 2 BUILDER: KRALİYET KASIMPATISI (180-FLORET CHRYSANTHEMUM)
+        // ============================================================================
+        function buildRoyalChrysanthemum() {
+            const flowerGroup = new THREE.Group();
+
+            // 1. Sturdy Organic Stem
+            const stemCurve = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(0, -2.2, -0.1),
+                new THREE.Vector3(0.06, -1.0, -0.02),
+                new THREE.Vector3(-0.04, 0.1, 0.03),
+                new THREE.Vector3(0.0, 1.15, 0.0)
+            ]);
+            const stemGeo = new THREE.TubeGeometry(stemCurve, 48, 0.072, 16, false);
+            const stemMesh = new THREE.Mesh(stemGeo, stemMaterial);
+            stemMesh.castShadow = true;
+            flowerGroup.add(stemMesh);
+
+            // 2. Pinnately Lobed Chrysanthemum Leaves
+            const leafCoords = [
+                { t: 0.34, rotY: 0.8, scale: 1.0 },
+                { t: 0.54, rotY: 2.9, scale: 0.92 },
+                { t: 0.74, rotY: 5.0, scale: 0.82 }
+            ];
+            leafCoords.forEach(lc => {
+                const pt = stemCurve.getPoint(lc.t);
+                const compoundLeaf = new THREE.Group();
+                compoundLeaf.position.copy(pt);
+                compoundLeaf.rotation.y = lc.rotY;
+                compoundLeaf.rotation.x = -0.34;
+
+                const terminal = createSculptedLeaf(1.35 * lc.scale, 0.42 * lc.scale, -0.38);
+                compoundLeaf.add(terminal);
+
+                // Lateral lobes
+                [-1, 1].forEach(side => {
+                    const lobeA = createSculptedLeaf(0.85 * lc.scale, 0.28 * lc.scale, -0.25);
+                    lobeA.position.set(side * 0.1, 0.05, 0.32);
+                    lobeA.rotation.y = side * 0.58;
+                    compoundLeaf.add(lobeA);
+
+                    const lobeB = createSculptedLeaf(0.65 * lc.scale, 0.22 * lc.scale, -0.20);
+                    lobeB.position.set(side * 0.12, 0.08, 0.65);
+                    lobeB.rotation.y = side * 0.48;
+                    compoundLeaf.add(lobeB);
+                });
+
+                flowerGroup.add(compoundLeaf);
+            });
+
+            // 3. Flower Head Group
+            const headGroup = new THREE.Group();
+            headGroup.position.set(0, 1.15, 0);
+            headGroup.rotation.x = 0.52; // Tilted toward camera so the dense Fibonacci spiral is front-and-center
+            flowerGroup.add(headGroup);
+
+            // Green Calyx Involucre Bracts (Phyllaries) beneath head
+            const bractGeo = createSculptedPetalGeometry({
+                length: 0.55,
+                width: 0.18,
+                uSegs: 10,
+                vSegs: 16,
+                widthCurve: (v) => Math.sin(Math.pow(v, 0.6) * Math.PI),
+                archCurve: (v) => Math.sin(v * Math.PI) * 0.08,
+                tipRecurve: 0.15,
+                cupDepth: 0.05,
+                midribDepth: -0.01,
+                ruffleAmp: 0,
+                veinAmp: 0
+            });
+            for (let b = 0; b < 18; b++) {
+                const bPivot = new THREE.Group();
+                bPivot.rotation.y = (b * Math.PI * 2) / 18;
+                const bMesh = new THREE.Mesh(bractGeo, stemMaterial);
+                bMesh.position.set(0, -0.06, 0.18);
+                bMesh.rotation.x = 0.12 + (b % 2) * 0.12;
+                bPivot.add(bMesh);
+                headGroup.add(bPivot);
+            }
+
+            // Domed Receptacle Core
+            const domeGeo = new THREE.SphereGeometry(0.32, 24, 16);
+            domeGeo.scale(1, 0.55, 1);
+            const domeMesh = new THREE.Mesh(domeGeo, stemMaterial);
+            headGroup.add(domeMesh);
+
+            // 4. 5 Concentric Sculpted Floret Geometries & Textures (from tightly incurved heart to sweeping outer petals)
+            const chrysBump = createChrysanthemumBumpMap();
+
+            const tierConfigs = [
+                // Tier 0: Tightly incurved golden-burgundy center bud florets
+                {
+                    len: 0.46, wid: 0.15, arch: 0.18, recurve: 0.68, cup: 0.09,
+                    tex: createChrysTierColorMap('#fde047', '#be123c', '#fde68a')
+                },
+                // Tier 1: Cupped incurving ruby-gold inner florets
+                {
+                    len: 0.72, wid: 0.21, arch: 0.22, recurve: 0.52, cup: 0.11,
+                    tex: createChrysTierColorMap('#fef08a', '#9f1239', '#fda4af')
+                },
+                // Tier 2: Deeply spooned mid-layer florets
+                {
+                    len: 1.02, wid: 0.27, arch: 0.24, recurve: 0.22, cup: 0.12,
+                    tex: createChrysTierColorMap('#fde68a', '#be185d', '#fbcfe8')
+                },
+                // Tier 3: Broad boat-shaped unfurling florets
+                {
+                    len: 1.32, wid: 0.31, arch: 0.22, recurve: -0.14, cup: 0.11,
+                    tex: createChrysTierColorMap('#fef3c7', '#db2777', '#fce7f3')
+                },
+                // Tier 4: Graceful sweeping outer florets
+                {
+                    len: 1.54, wid: 0.33, arch: 0.18, recurve: -0.38, cup: 0.095,
+                    tex: createChrysTierColorMap('#fffbeb', '#ec4899', '#fff1f2')
+                }
+            ];
+
+            const tierGeos = [];
+            const tierMats = [];
+
+            tierConfigs.forEach(tc => {
+                const g = createSculptedPetalGeometry({
+                    length: tc.len,
+                    width: tc.wid,
+                    uSegs: 16,
+                    vSegs: 28,
+                    widthCurve: (v) => {
+                        // Tubular base flaring into a spooned chrysanthemum tip
+                        return 0.28 + 0.72 * Math.pow(Math.sin(Math.pow(v, 0.75) * Math.PI), 0.72);
+                    },
+                    archCurve: (v) => Math.sin(v * Math.PI * 0.85) * tc.arch,
+                    tipRecurve: tc.recurve,
+                    cupDepth: tc.cup,
+                    midribDepth: -0.015,
+                    ruffleAmp: 0.014,
+                    ruffleFreq: 3.0,
+                    veinAmp: 0.004
+                });
+                tierGeos.push(g);
+
+                const m = new THREE.MeshPhysicalMaterial({
+                    map: tc.tex,
+                    bumpMap: chrysBump,
+                    bumpScale: 0.012,
+                    roughness: 0.38,
+                    metalness: 0.0,
+                    clearcoat: 0.15,
+                    side: THREE.DoubleSide
+                });
+                tierMats.push(m);
+            });
+
+            // 180 Florets arranged via exact Fibonacci Golden Angle (137.50776°)
+            const totalFlorets = 180;
+            const goldenAngle = 137.507764 * (Math.PI / 180);
+
+            for (let i = 0; i < totalFlorets; i++) {
+                const t = i / (totalFlorets - 1); // 0 = exact center, 1 = outermost ring
+                const angle = i * goldenAngle;
+                const radius = 0.02 + Math.pow(t, 0.72) * 0.32;
+
+                const tierIndex = Math.min(4, Math.floor(t * 5));
+                const pivot = new THREE.Group();
+                pivot.rotation.y = angle + (Math.sin(i * 1.7) * 0.03);
+
+                // Position along domed receptacle surface
+                const domeY = Math.cos(t * Math.PI * 0.45) * 0.16;
+                pivot.position.set(
+                    Math.cos(angle) * radius * 0.45,
+                    domeY,
+                    Math.sin(angle) * radius * 0.45
+                );
+
+                const mesh = new THREE.Mesh(tierGeos[tierIndex], tierMats[tierIndex]);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                mesh.position.z = radius * 0.55;
+
+                // Pitch angle: innermost florets stand nearly upright and curl over the center;
+                // outer florets fan progressively outward and downward
+                const pitchAngle = -Math.PI * 0.46 + Math.pow(t, 0.78) * (Math.PI * 0.52);
+                mesh.rotation.x = pitchAngle;
+
+                pivot.add(mesh);
+                headGroup.add(pivot);
+            }
+
+            return { root: flowerGroup, head: headGroup };
+        }
+
+        // ============================================================================
+        // 7. FLOWER 3 BUILDER: GECE KRALİÇESİ (EPIPHYLLUM OXYPETALUM)
+        // ============================================================================
+        function buildQueenOfTheNight() {
+            const flowerGroup = new THREE.Group();
+
+            // 1. Signature Arching Epiphyllum Neck & Stem
+            const stemCurve = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(0, -2.2, -0.2),
+                new THREE.Vector3(-0.12, -1.0, -0.12),
+                new THREE.Vector3(-0.08, 0.15, -0.04),
+                new THREE.Vector3(0.0, 1.10, 0.05)
+            ]);
+            const stemGeo = new THREE.TubeGeometry(stemCurve, 48, 0.068, 16, false);
+            const qStemMat = new THREE.MeshPhysicalMaterial({
+                color: 0x3b4d28,
+                roughness: 0.38,
+                clearcoat: 0.45
+            });
+            const stemMesh = new THREE.Mesh(stemGeo, qStemMat);
+            stemMesh.castShadow = true;
+            flowerGroup.add(stemMesh);
+
+            // Sculpted Phylloclade Bract Leaves along lower stem
+            const phylloConfigs = [
+                { t: 0.30, rotY: 0.6, len: 1.5, w: 0.38 },
+                { t: 0.55, rotY: 3.6, len: 1.3, w: 0.34 }
+            ];
+            phylloConfigs.forEach(pc => {
+                const pt = stemCurve.getPoint(pc.t);
+                const leaf = createSculptedLeaf(pc.len, pc.w, -0.35);
+                leaf.position.copy(pt);
+                leaf.rotation.y = pc.rotY;
+                leaf.rotation.x = -0.36;
+                flowerGroup.add(leaf);
+            });
+
+            // 2. Flower Head Group
+            const headGroup = new THREE.Group();
+            headGroup.position.set(0, 1.10, 0.05);
+            headGroup.rotation.x = 0.46;
+            flowerGroup.add(headGroup);
+
+            // Textured Pericarpel / Floral Tube Base with small bronze scales
+            const tubeGeo = new THREE.CylinderGeometry(0.18, 0.07, 0.34, 20);
+            const tubeMesh = new THREE.Mesh(tubeGeo, qStemMat);
+            tubeMesh.position.y = -0.08;
+            headGroup.add(tubeMesh);
+
+            const queenMap = createQueenOfNightTextures();
+            const chrysBump = createChrysanthemumBumpMap();
+
+            // Outer Corona Material (Warm Amber-Rose & Ivory slender outer tepals)
+            const outerTepalMat = new THREE.MeshPhysicalMaterial({
+                color: 0xfde68a,
+                map: queenMap,
+                bumpMap: chrysBump,
+                bumpScale: 0.008,
+                roughness: 0.32,
+                clearcoat: 0.35,
+                side: THREE.DoubleSide
+            });
+
+            // Inner Chalice Material (Luminous Translucent Pearl-White Silk)
+            const innerPetalMat = new THREE.MeshPhysicalMaterial({
+                color: 0xffffff,
+                map: queenMap,
+                bumpMap: chrysBump,
+                bumpScale: 0.01,
+                roughness: 0.24,
+                metalness: 0.02,
+                clearcoat: 0.48,
+                clearcoatRoughness: 0.25,
+                emissive: 0xfffbeb,
+                emissiveIntensity: 0.07,
+                side: THREE.DoubleSide
+            });
+
+            // 3. Outer Star Corona: 18 slender, sharply acuminate amber-gold tepals radiating behind the white cup
+            const outerCoronaGeo = createSculptedPetalGeometry({
+                length: 2.25,
+                width: 0.30,
+                uSegs: 20,
+                vSegs: 42,
+                widthCurve: (v) => Math.pow(Math.sin(Math.pow(v, 0.55) * Math.PI), 0.9),
+                archCurve: (v) => Math.sin(v * Math.PI * 0.75) * 0.22,
+                tipRecurve: -0.62,
+                cupDepth: 0.07,
+                midribDepth: -0.02,
+                ruffleAmp: 0.015,
+                ruffleFreq: 3.0,
+                veinAmp: 0.004
+            });
+
+            for (let i = 0; i < 18; i++) {
+                const angle = (i * Math.PI * 2) / 18;
+                const pivot = new THREE.Group();
+                pivot.rotation.y = angle;
+                pivot.position.y = -0.02 + (i % 2) * 0.03;
+
+                const mesh = new THREE.Mesh(outerCoronaGeo, outerTepalMat);
+                mesh.castShadow = true;
+                mesh.position.z = 0.12;
+                mesh.rotation.x = -0.02 + (i % 2) * 0.09;
+                pivot.add(mesh);
+                headGroup.add(pivot);
+            }
+
+            // 4. Inner Pearl Chalice: 28 Broad, Deeply Cupped Silky White Petals in 3 Overlapping Whorls
+            const midChaliceGeo = createSculptedPetalGeometry({
+                length: 2.05,
+                width: 0.72,
+                uSegs: 32,
+                vSegs: 52,
+                widthCurve: (v) => {
+                    // Narrow base expanding into a broad spatulate/ovate petal
+                    return Math.pow(Math.sin(Math.pow(v, 0.68) * Math.PI), 0.72);
+                },
+                archCurve: (v) => Math.sin(v * Math.PI * 0.85) * 0.34,
+                tipRecurve: -0.28,
+                cupDepth: 0.16,
+                midribDepth: -0.025,
+                ruffleAmp: 0.038,
+                ruffleFreq: 5.0,
+                veinAmp: 0.007
+            });
+
+            const innerChaliceGeo = createSculptedPetalGeometry({
+                length: 1.78,
+                width: 0.68,
+                uSegs: 32,
+                vSegs: 52,
+                widthCurve: (v) => Math.pow(Math.sin(Math.pow(v, 0.65) * Math.PI), 0.70),
+                archCurve: (v) => Math.sin(v * Math.PI * 0.90) * 0.38,
+                tipRecurve: 0.08, // Gently cupped inward forming the sacred chalice
+                cupDepth: 0.19,
+                midribDepth: -0.025,
+                ruffleAmp: 0.032,
+                ruffleFreq: 4.5,
+                veinAmp: 0.006
+            });
+
+            // Whorl A (10 petals), Whorl B (10 petals), Whorl C (8 inner petals)
+            const whorls = [
+                { count: 10, geo: midChaliceGeo, rotX: -Math.PI * 0.12, y: 0.03, z: 0.11, offset: 0.0 },
+                { count: 10, geo: midChaliceGeo, rotX: -Math.PI * 0.21, y: 0.06, z: 0.09, offset: Math.PI / 10 },
+                { count: 8,  geo: innerChaliceGeo, rotX: -Math.PI * 0.29, y: 0.09, z: 0.07, offset: Math.PI / 8 }
+            ];
+
+            whorls.forEach(w => {
+                for (let i = 0; i < w.count; i++) {
+                    const angle = (i * Math.PI * 2) / w.count + w.offset;
+                    const pivot = new THREE.Group();
+                    pivot.rotation.y = angle;
+                    pivot.position.y = w.y;
+
+                    const mesh = new THREE.Mesh(w.geo, innerPetalMat);
+                    mesh.castShadow = true;
+                    mesh.receiveShadow = true;
+                    mesh.position.z = w.z;
+                    mesh.rotation.x = w.rotX;
+                    pivot.add(mesh);
+                    headGroup.add(pivot);
+                }
+            });
+
+            // 5. Cascading Golden-Cream Stamens & Multi-Rayed Star Stigma Crown
+            const qFilamentMat = new THREE.MeshPhysicalMaterial({
+                color: 0xfef9c3,
+                roughness: 0.25,
+                emissive: 0xfef08a,
+                emissiveIntensity: 0.15
+            });
+            const qAntherMat = new THREE.MeshStandardMaterial({
+                color: 0xfacc15,
+                roughness: 0.5,
+                emissive: 0xd97706,
+                emissiveIntensity: 0.35
+            });
+
+            for (let s = 0; s < 40; s++) {
+                const angle = (s * Math.PI * 2) / 40;
+                const len = 0.95 + (s % 3) * 0.18;
+                const spread = 0.18 + (s % 2) * 0.08;
+
+                // Epiphyllum stamens cascade gracefully toward the lower lip of the chalice
+                const gravityDip = Math.cos(angle) * 0.08;
+                const sCurve = new THREE.CatmullRomCurve3([
+                    new THREE.Vector3(Math.sin(angle) * 0.06, 0.05, Math.cos(angle) * 0.06),
+                    new THREE.Vector3(Math.sin(angle) * spread * 0.7, len * 0.55, Math.cos(angle) * spread * 0.7 + 0.06),
+                    new THREE.Vector3(Math.sin(angle) * spread, len, Math.cos(angle) * spread + gravityDip + 0.12)
+                ]);
+                const sGeo = new THREE.TubeGeometry(sCurve, 18, 0.0085, 6, false);
+                headGroup.add(new THREE.Mesh(sGeo, qFilamentMat));
+
+                const endPt = sCurve.getPoint(1.0);
+                const tip = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 8), qAntherMat);
+                tip.scale.set(1, 1.6, 1);
+                tip.position.copy(endPt);
+                headGroup.add(tip);
+            }
+
+            // Central Style + 12-Lobed Star Stigma Crown (Signature feature of Queen of the Night)
+            const qStyleCurve = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(0, 0.04, 0),
+                new THREE.Vector3(0, 0.75, 0.08),
+                new THREE.Vector3(0, 1.38, 0.18)
+            ]);
+            const qStyleGeo = new THREE.TubeGeometry(qStyleCurve, 24, 0.022, 10, false);
+            headGroup.add(new THREE.Mesh(qStyleGeo, qFilamentMat));
+
+            const crownGroup = new THREE.Group();
+            crownGroup.position.set(0, 1.39, 0.18);
+            crownGroup.rotation.x = 0.35;
+            for (let r = 0; r < 12; r++) {
+                const rAngle = (r * Math.PI * 2) / 12;
+                const rayCurve = new THREE.CatmullRomCurve3([
+                    new THREE.Vector3(0, 0, 0),
+                    new THREE.Vector3(Math.sin(rAngle) * 0.09, 0.05, Math.cos(rAngle) * 0.09),
+                    new THREE.Vector3(Math.sin(rAngle) * 0.15, 0.02, Math.cos(rAngle) * 0.15)
+                ]);
+                const rayGeo = new THREE.TubeGeometry(rayCurve, 10, 0.011, 6, false);
+                crownGroup.add(new THREE.Mesh(rayGeo, qFilamentMat));
+            }
+            headGroup.add(crownGroup);
+
+            return { root: flowerGroup, head: headGroup };
+        }
+
+        // ============================================================================
+        // 8. SCULPTURAL SMOKED-CRYSTAL VASE & PEDESTAL (FOR BOUQUET & GALLERY)
+        // ============================================================================
+        function buildCrystalVaseAndPedestal() {
+            const vaseGroup = new THREE.Group();
+
+            // Sculpted Lathe Profile for Fluted Smoked-Crystal Vase
+            const vasePoints = [];
+            for (let i = 0; i <= 30; i++) {
+                const t = i / 30; // 0 at bottom, 1 at top rim
+                const y = -2.4 + t * 2.35;
+                // Elegant hourglass-amphora silhouette
+                const r = 0.48 + Math.sin(t * Math.PI * 1.15) * 0.28 - Math.sin(t * Math.PI * 2.0) * 0.08;
+                vasePoints.push(new THREE.Vector2(r, y));
+            }
+            const vaseGeo = new THREE.LatheGeometry(vasePoints, 48);
+            const vaseMat = new THREE.MeshPhysicalMaterial({
+                color: 0x1e293b,
+                roughness: 0.12,
+                metalness: 0.1,
+                transmission: 0.72,
+                transparent: true,
+                opacity: 0.88,
+                clearcoat: 1.0,
+                clearcoatRoughness: 0.08,
+                reflectivity: 0.9,
+                side: THREE.DoubleSide
+            });
+            const vaseMesh = new THREE.Mesh(vaseGeo, vaseMat);
+            vaseMesh.castShadow = true;
+            vaseMesh.receiveShadow = true;
+            vaseGroup.add(vaseMesh);
+
+            // Subtle Champagne-Gold Rim Ring on top of Vase
+            const rimGeo = new THREE.TorusGeometry(0.41, 0.014, 16, 64);
+            const rimMat = new THREE.MeshStandardMaterial({
+                color: 0xfde68a,
+                roughness: 0.25,
+                metalness: 0.85
+            });
+            const rimMesh = new THREE.Mesh(rimGeo, rimMat);
+            rimMesh.rotation.x = Math.PI / 2;
+            rimMesh.position.y = -0.05;
+            vaseGroup.add(rimMesh);
+
+            // Dark Obsidian Gallery Pedestal beneath Vase
+            const pedGeo = new THREE.CylinderGeometry(1.65, 1.85, 0.35, 64);
+            const pedMat = new THREE.MeshStandardMaterial({
+                color: 0x0b0d13,
+                roughness: 0.25,
+                metalness: 0.4
+            });
+            const pedMesh = new THREE.Mesh(pedGeo, pedMat);
+            pedMesh.position.y = -2.58;
+            pedMesh.receiveShadow = true;
+            vaseGroup.add(pedMesh);
+
+            return vaseGroup;
+        }
+
+        // Instantiate all 3 Sculpted Flowers & Vase
+        const lilyObj = buildStargazerLily();
+        const chrysObj = buildRoyalChrysanthemum();
+        const queenObj = buildQueenOfTheNight();
+        const crystalVase = buildCrystalVaseAndPedestal();
+
+        scene.add(lilyObj.root);
+        scene.add(chrysObj.root);
+        scene.add(queenObj.root);
+        scene.add(crystalVase);
+
+        const flowerObjects = [lilyObj, chrysObj, queenObj];
+
+        // Subtle Ambient Dust Motes (Only 35 ultra-fine gallery light specks for depth)
+        const dustCount = 35;
+        const dustGeo = new THREE.BufferGeometry();
+        const dustPos = new Float32Array(dustCount * 3);
+        for (let i = 0; i < dustCount; i++) {
+            dustPos[i * 3] = (Math.random() - 0.5) * 9.0;
+            dustPos[i * 3 + 1] = -1.0 + Math.random() * 5.0;
+            dustPos[i * 3 + 2] = (Math.random() - 0.5) * 6.0;
+        }
+        dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+        const dustMat = new THREE.PointsMaterial({
+            color: 0xfff1f2,
+            size: 0.035,
+            transparent: true,
+            opacity: 0.35
+        });
+        const dustPoints = new THREE.Points(dustGeo, dustMat);
+        scene.add(dustPoints);
+
+        // ============================================================================
+        // 9. VIEW STATE & SMOOTH CHOREOGRAPHED TRANSITIONS
+        // ============================================================================
+        let currentViewIndex = 0;
+
+        // Target transforms for each flower in each view mode
+        const flowerTargetTransforms = [
+            { pos: new THREE.Vector3(), rot: new THREE.Euler(), scale: 1 },
+            { pos: new THREE.Vector3(), rot: new THREE.Euler(), scale: 1 },
+            { pos: new THREE.Vector3(), rot: new THREE.Euler(), scale: 1 }
+        ];
+        let vaseTargetScale = 0.001;
+        let desiredCamPos = VIEWS[0].camPos.clone();
+        let desiredControlsTarget = VIEWS[0].target.clone();
+        let isCameraTransitioning = false;
+
+        function configureTargetsForView(viewIdx) {
+            const isMobile = window.innerWidth < 640;
+
+            if (viewIdx < 3) {
+                // Solo Masterpiece Showcase: Selected flower is centered at origin; others gracefully recede
+                for (let i = 0; i < 3; i++) {
+                    if (i === viewIdx) {
+                        flowerTargetTransforms[i].pos.set(0, 0, 0);
+                        flowerTargetTransforms[i].rot.set(0, 0, 0);
+                        flowerTargetTransforms[i].scale = 1.08;
+                    } else {
+                        const side = i < viewIdx ? -1 : 1;
+                        flowerTargetTransforms[i].pos.set(side * 6.5, -3.5, -5.0);
+                        flowerTargetTransforms[i].rot.set(0, side * 0.6, 0);
+                        flowerTargetTransforms[i].scale = 0.001;
+                    }
+                }
+                vaseTargetScale = 0.001;
+                desiredCamPos.copy(VIEWS[viewIdx].camPos);
+                if (isMobile) desiredCamPos.z += 1.65;
+                desiredControlsTarget.copy(VIEWS[viewIdx].target);
+            } else {
+                // Mode 3: "Buket" — All 3 flowers arranged artfully together in the smoked-crystal vase
+                // Left: Stargazer Lily
+                flowerTargetTransforms[0].pos.set(-1.35, -0.15, 0.15);
+                flowerTargetTransforms[0].rot.set(0.05, 0.32, 0.26);
+                flowerTargetTransforms[0].scale = 0.88;
+
+                // Center-High: Royal Chrysanthemum
+                flowerTargetTransforms[1].pos.set(0.0, 0.32, -0.22);
+                flowerTargetTransforms[1].rot.set(0.06, 0.0, 0.0);
+                flowerTargetTransforms[1].scale = 0.94;
+
+                // Right: Queen of the Night
+                flowerTargetTransforms[2].pos.set(1.38, -0.10, 0.18);
+                flowerTargetTransforms[2].rot.set(0.05, -0.34, -0.25);
+                flowerTargetTransforms[2].scale = 0.88;
+
+                vaseTargetScale = 1.0;
+                desiredCamPos.copy(VIEWS[3].camPos);
+                if (isMobile) desiredCamPos.z += 2.6;
+                desiredControlsTarget.copy(VIEWS[3].target);
+            }
+            isCameraTransitioning = true;
+        }
+
+        // Stop camera transition override if user grabs the canvas manually
+        container.addEventListener('pointerdown', () => {
+            isCameraTransitioning = false;
+        });
+        container.addEventListener('wheel', () => {
+            isCameraTransitioning = false;
+        }, { passive: true });
+
+        function switchView(viewIdx) {
+            currentViewIndex = viewIdx;
+
+            // Update Navigation Tabs
+            for (let i = 0; i < 4; i++) {
+                const tab = document.getElementById(`tab-${i}`);
+                if (tab) tab.classList.toggle('active', i === viewIdx);
+            }
+
+            // Smoothly cross-fade editorial typography
+            const captionEl = document.getElementById('editorial-caption');
+            captionEl.classList.add('editorial-hidden');
+
+            setTimeout(() => {
+                const vData = VIEWS[viewIdx];
+                document.getElementById('caption-index').textContent = vData.index;
+                document.getElementById('caption-latin').textContent = vData.latin;
+                document.getElementById('caption-title').textContent = vData.title;
+                document.getElementById('caption-desc').textContent = vData.desc;
+                captionEl.classList.remove('editorial-hidden');
+            }, 240);
+
+            configureTargetsForView(viewIdx);
+        }
+
+        // ============================================================================
+        // 10. MINIMALIST LOVE NOTE MODAL LOGIC
+        // ============================================================================
+        function openNoteModal() {
+            const modal = document.getElementById('note-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            toggleEditNote(false);
+        }
+
+        function closeNoteModal() {
+            const modal = document.getElementById('note-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function toggleEditNote(editMode) {
+            const readView = document.getElementById('note-read-view');
+            const editView = document.getElementById('note-edit-view');
+            if (editMode) {
+                document.getElementById('input-recipient').value = noteData.recipient;
+                document.getElementById('input-title').value = noteData.title;
+                document.getElementById('input-body').value = noteData.body.replace(/^"|"$/g, '');
+                document.getElementById('input-sig').value = noteData.sig;
+                readView.classList.add('hidden');
+                editView.classList.remove('hidden');
+            } else {
+                readView.classList.remove('hidden');
+                editView.classList.add('hidden');
+            }
+        }
+
+        function saveNoteChanges() {
+            const r = document.getElementById('input-recipient').value.trim();
+            const t = document.getElementById('input-title').value.trim();
+            const b = document.getElementById('input-body').value.trim();
+            const s = document.getElementById('input-sig').value.trim();
+
+            if (r) noteData.recipient = r;
+            if (t) noteData.title = t;
+            if (b) noteData.body = `"${b}"`;
+            if (s) noteData.sig = s;
+
+            renderNoteDOM();
+            toggleEditNote(false);
+        }
+
+        function copyShareUrl() {
+            const r = document.getElementById('input-recipient').value.trim() || noteData.recipient;
+            const t = document.getElementById('input-title').value.trim() || noteData.title;
+            const b = document.getElementById('input-body').value.trim() || noteData.body;
+            const s = document.getElementById('input-sig').value.trim() || noteData.sig;
+
+            const params = new URLSearchParams();
+            params.set('to', r);
+            params.set('title', t);
+            params.set('body', b.startsWith('"') ? b : `"${b}"`);
+            params.set('sig', s);
+
+            const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+            const temp = document.createElement('textarea');
+            temp.value = url;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+
+            const btn = document.getElementById('copy-url-btn');
+            const old = btn.textContent;
+            btn.textContent = "✓ Link Kopyalandı";
+            setTimeout(() => { btn.textContent = old; }, 2000);
+        }
+
+        // ============================================================================
+        // 11. ANIMATION LOOP & RESPONSIVE RESIZE
+        // ============================================================================
+        const clock = new THREE.Clock();
+
+        // Initialize starting positions immediately for View 0 (Stargazer Lily)
+        configureTargetsForView(0);
+        flowerObjects.forEach((f, idx) => {
+            f.root.position.copy(flowerTargetTransforms[idx].pos);
+            f.root.scale.setScalar(flowerTargetTransforms[idx].scale);
+        });
+        crystalVase.scale.setScalar(vaseTargetScale);
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const dt = Math.min(clock.getDelta(), 0.1);
+            const t = clock.getElapsedTime();
+
+            // 1. Interpolate Flower Positions, Rotations, Scales & Gentle Organic Breathing
+            flowerObjects.forEach((f, idx) => {
+                const target = flowerTargetTransforms[idx];
+                f.root.position.lerp(target.pos, dt * 4.5);
+
+                const curScale = THREE.MathUtils.lerp(f.root.scale.x, target.scale, dt * 4.8);
+                f.root.scale.setScalar(curScale);
+                f.root.visible = curScale > 0.015;
+
+                // Subtle organic wind sway added on top of target rotation
+                const windX = Math.sin(t * 0.9 + idx * 1.7) * 0.018;
+                const windZ = Math.cos(t * 0.75 + idx * 2.1) * 0.022;
+
+                f.root.rotation.x = THREE.MathUtils.lerp(f.root.rotation.x, target.rot.x + windX, dt * 4.5);
+                f.root.rotation.y = THREE.MathUtils.lerp(f.root.rotation.y, target.rot.y + Math.sin(t * 0.35) * 0.08, dt * 4.5);
+                f.root.rotation.z = THREE.MathUtils.lerp(f.root.rotation.z, target.rot.z + windZ, dt * 4.5);
+            });
+
+            // 2. Interpolate Crystal Vase Visibility in Bouquet Mode
+            const vScale = THREE.MathUtils.lerp(crystalVase.scale.x, vaseTargetScale, dt * 4.8);
+            crystalVase.scale.setScalar(vScale);
+            crystalVase.visible = vScale > 0.015;
+
+            // 3. Smooth Camera & Target Transition
+            if (isCameraTransitioning) {
+                camera.position.lerp(desiredCamPos, dt * 3.8);
+                controls.target.lerp(desiredControlsTarget, dt * 4.2);
+                if (camera.position.distanceTo(desiredCamPos) < 0.03) {
+                    isCameraTransitioning = false;
+                }
+            }
+
+            // 4. Drift Subtle Gallery Dust Motes
+            const dPos = dustGeo.attributes.position;
+            for (let i = 0; i < dustCount; i++) {
+                let py = dPos.getY(i) + dt * 0.08;
+                if (py > 4.0) py = -1.0;
+                dPos.setY(i, py);
+            }
+            dPos.needsUpdate = true;
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            configureTargetsForView(currentViewIndex);
+        });
+
+        window.onload = function () {
+            initUrlParams();
+            animate();
+        };
+    </script>
+</body>
+</html>
